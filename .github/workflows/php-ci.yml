@@ -16,7 +16,7 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      # 2️⃣ Configura a versão do PHP
+      # 2️⃣ Configura o PHP
       - name: Configurar PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -24,23 +24,25 @@ jobs:
           extensions: mbstring, intl, pdo_mysql
           coverage: none
 
-      # 3️⃣ Instala dependências com Composer
+      # 3️⃣ Instala dependências (subindo um nível)
       - name: Instalar dependências
-        run: |
-          composer install --no-interaction --no-progress --prefer-dist
+        working-directory: ../
+        run: composer install --no-interaction --no-progress --prefer-dist
 
-      # 4️⃣ (Opcional) Valida o composer.json e o autoload
+      # 4️⃣ Valida composer.json e autoload (subindo um nível)
       - name: Validar composer.json e autoload
-        working-directory: ./pocs
+        working-directory: ../
         run: |
           composer validate --no-check-lock
           composer dump-autoload --optimize
 
-      # 5️⃣ (Opcional) Executa testes
+      # 5️⃣ Executa testes (PHPUnit) se existir
       - name: Executar testes (PHPUnit)
+        working-directory: ../
         run: |
           if [ -f vendor/bin/phpunit ]; then
             vendor/bin/phpunit --colors=always
           else
             echo "⚠️ Nenhum teste encontrado."
           fi
+
