@@ -60,12 +60,11 @@ jobs:
     - name: Test AWS connection
       run: aws sts get-caller-identity
 
-
-      
-      # Para configuração via secrets
-      #  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #  aws-region: ${{ env.AWS_REGION }}
+     
+    # Para configuração via secrets
+    #  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #  aws-region: ${{ env.AWS_REGION }}
 
     #- name: Login to Amazon ECR
     #  id: login-ecr
