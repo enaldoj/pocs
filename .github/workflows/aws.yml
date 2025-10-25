@@ -29,7 +29,6 @@ jobs:
           role-to-assume: arn:aws:iam::124355661462:role/github-actions-role
           aws-region: us-east-1
 
-
       - name: Executar build no CodeBuild
         run: |
           aws codebuild start-build \
