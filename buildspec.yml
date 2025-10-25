@@ -25,6 +25,10 @@ phases:
       - echo "Baixando imagem existente (latest)..."
       - docker pull ${ECR_URI}:latest || echo "Nenhuma imagem 'latest' encontrada, começando do zero."
 
+      # Build da nova imagem local
+      - echo "Buildando imagem localmente..."
+      - docker build -t ${REPO_NAME}:latest .
+
       # Buscar última tag existente no ECR
       - echo "Buscando última tag válida no ECR..."
       - docker tag poc-github:latest 124355661462.dkr.ecr.us-east-1.amazonaws.com/poc-github:latest
