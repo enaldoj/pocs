@@ -41,7 +41,8 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           AWS_REGION: us-east-1 # set this to your preferred AWS region, e.g. us-west-1
           ECR_REPOSITORY: poc-github # set this to your Amazon ECR repository name
-          IMAGE_TAG: ${{ gitHub.sha }} # SHA do commit
+          #IMAGE_TAG: ${{ gitHub.sha }} # 'tageia' com o SHA do commit
+          IMAGE_TAG: v0.0.1 # 'tageia' com versão v0.0.1 com o SHA do commit
 
         run: |
 
