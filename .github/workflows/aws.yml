@@ -33,58 +33,57 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y jq
 
+      # =========================================
+      # 🔢 Etapa para gerar automaticamente a próxima versão
+      # =========================================
       - name: Get next version tag
         id: version
         run: |
-          REPO_NAME=poc-github
-          REGION=us-east-1
+          REPO_NAME="poc-github"
+          REGION="us-east-1"
+          echo "🔍 Buscando última tag válida no ECR ($REPO_NAME em $REGION)..."
 
-          echo "Buscando última tag válida do ECR..."
-
-          # Força atualização do cache local do ECR
-          aws ecr describe-images --repository-name "$REPO_NAME" --region "$REGION" >/dev/null 2>&1 || true
-
-          # Captura todas as tags e seleciona apenas as no formato vX.Y.Z
-          TAGS=$(aws ecr describe-images --repository-name "$REPO_NAME" --region "$REGION" \
-            --query 'imageDetails[].imageTags[]' --output text 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)
+          TAGS=$(aws ecr describe-images \
+            --repository-name "$REPO_NAME" \
+            --region "$REGION" \
+            --query 'imageDetails[].imageTags' \
+            --output json | jq -r '.[]? | .[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V || true)
 
           if [ -z "$TAGS" ]; then
-            echo "Nenhuma tag encontrada. Iniciando em v0.0.1"
+            echo "⚠️ Nenhuma tag encontrada — iniciando em v0.0.1"
             NEW_TAG="v0.0.1"
           else
-            LAST_TAG=$(echo "$TAGS" | sort -V | tail -n 1)
-            PREFIX=v
+            LAST_TAG=$(echo "$TAGS" | tail -n 1)
+            echo "✅ Última tag encontrada: $LAST_TAG"
+            PREFIX="v"
             VERSION=${LAST_TAG#$PREFIX}
             IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
             PATCH=$((PATCH+1))
             NEW_TAG="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
-            echo "Última tag encontrada: $LAST_TAG"
-            echo "Nova tag gerada: $NEW_TAG"
           fi
 
-          # Exporta variável para os próximos passos
+          echo "🚀 Nova tag gerada: $NEW_TAG"
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+      
 
 
+      # =========================================
+      # 🐳 Build, tag e push da imagem para o ECR
+      # =========================================
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          AWS_REGION: us-east-1
           ECR_REPOSITORY: poc-github
-          IMAGE_TAG: ${{ env.NEW_TAG }}
         run: |
-          echo "Usando tag: ${IMAGE_TAG}"
-          echo "Construindo imagem: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          echo "🏗️  Construindo imagem Docker com a tag $NEW_TAG..."
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG .
 
-          docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} .
-          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+          echo "📤 Enviando imagem para o ECR..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG
 
-          # Atualiza também a 'latest'
-          docker tag ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
-          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
-
-          echo "image=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
-
+          echo "✅ Imagem enviada: $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG"
 
 
     #- name: Fill in the new image ID in the Amazon ECS task definition
