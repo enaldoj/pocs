@@ -60,6 +60,8 @@ jobs:
           PATCH=$((PATCH+1))
           NEW_TAG="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
 
+          echo "Nova tag gerada: $NEW_TAG"
+
           # Exporta para os próximos passos
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
@@ -67,22 +69,21 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          AWS_REGION: us-east-1 # set this to your preferred AWS region, e.g. us-west-1
-          ECR_REPOSITORY: poc-github # set this to your Amazon ECR repository name
-          #IMAGE_TAG: ${{ gitHub.sha }}   # tag com o SHA do commit
-          #IMAGE_TAG: v0.0.1              # tag com versão v0.0.1 com o SHA do commit
-          IMAGE_TAG: ${{ env.NEW_TAG }}   # tag automática
-
+          ECR_REPOSITORY: poc-github
+          AWS_REGION: us-east-1
+          IMAGE_TAG: ${{ env.NEW_TAG }}
         run: |
+          echo "Construindo imagem: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
 
-          # Build a docker container and
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} .
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
 
-          # push it to ECR so that it can
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # Atualiza a tag 'latest' também
+          docker tag ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
 
-          # be deployed to ECS.
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
+
 
     #- name: Fill in the new image ID in the Amazon ECS task definition
     #  id: task-def
