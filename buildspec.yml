@@ -21,6 +21,10 @@ phases:
       # Login no ECR
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 124355661462.dkr.ecr.us-east-1.amazonaws.com
 
+      # Baixar a última imagem (para poder retaggear)
+      - echo "Baixando imagem existente (latest)..."
+      - docker pull ${ECR_URI}:latest || echo "Nenhuma imagem 'latest' encontrada, começando do zero."
+
       # Buscar última tag existente no ECR
       - echo "Buscando última tag válida no ECR..."
       - docker tag poc-github:latest 124355661462.dkr.ecr.us-east-1.amazonaws.com/poc-github:latest
