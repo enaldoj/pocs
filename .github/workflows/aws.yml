@@ -1,16 +1,16 @@
-name: Deploy to Amazon ECS
+name: Deploy to Amazon ECR
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
 
 permissions:
-  id-token: write # This is required for requesting the JWT
-  contents: read # This is required for actions/checkout
+  id-token: write
+  contents: read
 
 jobs:
   deploy:
-    name: Deploy
+    name: Build and Push to ECR
     runs-on: ubuntu-latest
     environment: production
 
@@ -23,41 +23,35 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::124355661462:role/github-actions-role
           aws-region: us-east-1
-      #- name: Test AWS connection
-      #  run: aws sts get-caller-identity
-
-      # Para configuração via secrets
-      #  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #  aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-      
+
+      - name: Install jq
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+
       - name: Get next version tag
         id: version
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y jq        
-
           REPO_NAME=poc-github
           REGION=us-east-1
-          
+
+          echo "Buscando última tag válida no ECR..."
 
           # Busca todas as tags válidas (vX.Y.Z) e pega a mais recente
           LAST_TAG=$(aws ecr describe-images --repository-name "$REPO_NAME" --region "$REGION" \
             --query "imageDetails[?imageTags != null].imageTags[]" --output json \
             | jq -r '.[]' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
 
-          # Se não existir nenhuma tag, define v0.0.0
           if [ -z "$LAST_TAG" ]; then
             LAST_TAG="v0.0.0"
           fi
 
           echo "Última tag encontrada: $LAST_TAG"
 
-          # Incrementa o patch (último número)
           PREFIX=v
           VERSION=${LAST_TAG#$PREFIX}
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
@@ -65,8 +59,6 @@ jobs:
           NEW_TAG="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
 
           echo "Nova tag gerada: $NEW_TAG"
-
-          # Exporta para os próximos passos
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
       - name: Build, tag, and push image to Amazon ECR
@@ -74,19 +66,20 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: poc-github
-          AWS_REGION: us-east-1
           IMAGE_TAG: ${{ env.NEW_TAG }}
         run: |
+          echo "Usando tag: ${IMAGE_TAG}"
           echo "Construindo imagem: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
 
           docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} .
           docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
 
-          # Atualiza a tag 'latest' também
+          # Atualiza também a 'latest'
           docker tag ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
           docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
 
           echo "image=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
+
 
 
     #- name: Fill in the new image ID in the Amazon ECS task definition
