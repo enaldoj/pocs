@@ -32,7 +32,7 @@ jobs:
       - name: Executar build no CodeBuild
         run: |
           aws codebuild start-build \
-            --project-name ppoc-git-hub \
+            --project-name poc-git-hub \
             --region us-east-1
 
 
