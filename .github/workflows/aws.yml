@@ -39,17 +39,34 @@ jobs:
         id: version
         run: |
 
+      - name: Get next version tag
+        id: version
+        run: |
+          REPO_NAME=poc-github
+          REGION=us-east-1
+
           # Busca todas as tags válidas no ECR e obtém a última versão publicada
           LAST_TAG=$(aws ecr describe-images --repository-name "$REPO_NAME" --region "$REGION" \
             --query 'imageDetails[].imageTags[]' --output text | awk '{print $1}' \
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+
+          # Se não existir nenhuma tag, começa em v0.0.0
+          if [ -z "$LAST_TAG" ]; then
+            LAST_TAG="v0.0.0"
+          fi
+
+          echo "Última tag encontrada: $LAST_TAG"
+
+          # Incrementa o patch (último número)
           PREFIX=v
           VERSION=${LAST_TAG#$PREFIX}
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
           PATCH=$((PATCH+1))
           NEW_TAG="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
+
+          echo "Nova tag gerada: $NEW_TAG"
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
-          echo "Next version: $NEW_TAG"
+
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
