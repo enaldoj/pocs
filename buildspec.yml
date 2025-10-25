@@ -34,7 +34,7 @@ phases:
           --repository-name "$REPO_NAME" \
           --region "$REGION" \
           --query 'imageDetails[].imageTags' \
-          --output json | jq -r '.[]? | .[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V || true)
+          --output json 2>/dev/null | jq -r '.[]? | .[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V || true)
 
         if [ -z "$TAGS" ]; then
           echo "⚠️ Nenhuma tag encontrada — iniciando em v0.0.1"
@@ -58,7 +58,7 @@ phases:
       - echo "🏗️ Construindo imagem Docker..."
       - source build.env
       - echo "Imagem: ${ECR_URI}:${TAG_FINAL}"
-      - docker build -t "${ECR_URI}:${TAG_FINAL} ."
+      - docker build -t "${ECR_URI}:${TAG_FINAL}" .
       - docker tag "${ECR_URI}:${TAG_FINAL}" "${ECR_URI}:latest"
 
   post_build:
@@ -69,7 +69,7 @@ phases:
       - docker push "${ECR_URI}:latest"
       - echo "✅ Imagem enviada com sucesso!"
       - echo "🔖 Tag final: ${TAG_FINAL}"
-      - echo "IMAGE_URI=${ECR_URI}:${TAG_FINAL} >> build.env"
+      - echo "IMAGE_URI=${ECR_URI}:${TAG_FINAL}" >> build.env
 
 artifacts:
   files:
