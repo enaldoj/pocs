@@ -62,7 +62,7 @@ phases:
   post_build:
     commands:
       - "echo 'Enviando imagem para o ECR...'"
-      - "source build.env"
+      - "source $CODEBUILD_SRC_DIR/build.env"
       - "docker push ${ECR_URI}:${TAG_FINAL}"
       - "docker push ${ECR_URI}:latest"
       - "echo 'Imagem enviada com sucesso!'"
