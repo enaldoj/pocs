@@ -40,9 +40,10 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y jq        
-          
+
           REPO_NAME=poc-github
           REGION=us-east-1
+          
 
           # Busca todas as tags válidas (vX.Y.Z) e pega a mais recente
           LAST_TAG=$(aws ecr describe-images --repository-name "$REPO_NAME" --region "$REGION" \
