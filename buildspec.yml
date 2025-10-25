@@ -23,7 +23,7 @@ phases:
 
       # Buscar última tag existente no ECR
       - echo "Buscando última tag válida no ECR..."
-      - docker tag poc-github:latest 124355661462.dkr.ecr.us-east-1.amazonaws.com/poc-github:lates
+      - docker tag poc-github:latest 124355661462.dkr.ecr.us-east-1.amazonaws.com/poc-github:latest
       #- TAGS=$(aws ecr describe-images --repository-name "${REPO_NAME}" --region "${REGION}" --query 'imageDetails[].imageTags' --output json 2>/dev/null | jq -r '.[]? | .[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V || echo "")
       - |
         if [ -z "$TAGS" ]; then
