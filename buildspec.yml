@@ -20,20 +20,20 @@ phases:
       - echo "Buscando última tag válida no ECR..."
       - TAGS=$(aws ecr describe-images --repository-name "$REPO_NAME" --region "$REGION" --query 'imageDetails[].imageTags' --output json 2>/dev/null | jq -r '.[]? | .[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V || echo "")
       - |
-        if [ -z "$TAGS" ]; then
-          echo "Nenhuma tag encontrada — iniciando em v0.0.1"
-          NEW_TAG="v0.0.1"
-        else
-          LAST_TAG=$(echo "$TAGS" | tail -n 1)
-          echo "Última tag encontrada: $LAST_TAG"
-          VERSION=${LAST_TAG#v}
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          PATCH=$((PATCH+1))
-          NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
-        fi
-        echo "Nova tag gerada: $NEW_TAG"
-        echo "TAG_FINAL=$NEW_TAG" >> build.env
-        echo "ECR_URI=$ECR_URI" >> build.env
+      if [ -z "$TAGS" ]; then
+        echo "Nenhuma tag encontrada — iniciando em v0.0.1"
+        NEW_TAG="v0.0.1"
+      else
+        LAST_TAG=$(echo "$TAGS" | tail -n 1)
+        echo "Última tag encontrada: $LAST_TAG"
+        VERSION=${LAST_TAG#v}
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+        PATCH=$((PATCH+1))
+        NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+      fi
+      echo "Nova tag gerada: $NEW_TAG"
+      echo "TAG_FINAL=$NEW_TAG" >> build.env
+      echo "ECR_URI=$ECR_URI" >> build.env
 
   build:
     commands:
