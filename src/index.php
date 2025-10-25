@@ -1,6 +1,6 @@
 <?php
 $pageTitle = "Reino dos Tabuleiros: Xadrez e Dama";
-$welcomeMessage = "Bem vindas Enanda e Emilliana ao mundo dos jogos de estratégia clássicos!";
+$welcomeMessage = "Bem vindas Enanda e Emilliana ao mundo dos jogos de estratégia clássicos! ";
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
