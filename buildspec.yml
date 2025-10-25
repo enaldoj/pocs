@@ -45,7 +45,6 @@ phases:
           PATCH=$((PATCH+1))
           NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
         fi
-
         echo "Nova tag gerada: $NEW_TAG"
         echo "TAG_FINAL=$NEW_TAG" >> $CODEBUILD_SRC_DIR/build.env
         echo "ECR_URI=$ECR_URI" >> $CODEBUILD_SRC_DIR/build.env
