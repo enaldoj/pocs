@@ -60,6 +60,9 @@ jobs:
           PATCH=$((PATCH+1))
           NEW_TAG="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
 
+          # Exporta para os próximos passos
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
