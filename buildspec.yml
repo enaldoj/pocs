@@ -58,7 +58,7 @@ phases:
       - echo "🏗️ Construindo imagem Docker..."
       - source build.env
       - echo "Imagem: ${ECR_URI}:${TAG_FINAL}"
-      - docker build -t "${ECR_URI}:${TAG_FINAL}" .
+      - docker build -t "${ECR_URI}:${TAG_FINAL} ."
       - docker tag "${ECR_URI}:${TAG_FINAL}" "${ECR_URI}:latest"
 
   post_build:
