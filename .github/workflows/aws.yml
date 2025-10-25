@@ -10,31 +10,36 @@ permissions:
 
 jobs:
   deploy:
-    name: Build and Push to ECR
+    name: Deploy para ECR
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
-      - name: Checkout
+      # ==============================
+      # 🧩 Etapa 1: Checkout do código
+      # ==============================
+      - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      # =========================================
+      # 🔐 Etapa 2: Configura credenciais AWS
+      # =========================================
+      - name: Configurar credenciais AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::124355661462:role/github-actions-role
           aws-region: us-east-1
 
       # =========================================
-      # 🔐 Login no Amazon ECR
+      # 🔓 Etapa 3: Login no Amazon ECR
       # =========================================
-      - name: Login to Amazon ECR
+      - name: Login no Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       # =========================================
-      # 🔢 Gerar automaticamente a próxima versão
+      # 🔢 Etapa 4: Gerar automaticamente a próxima versão
       # =========================================
-      - name: Generate next version tag
+      - name: Gerar próxima tag de versão
         id: version
         run: |
           REPO_NAME="poc-github"
@@ -61,30 +66,34 @@ jobs:
           fi
 
           echo "🚀 Nova tag gerada: $NEW_TAG"
-          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
-          echo "::set-output name=tag::$NEW_TAG"
+          echo "NEW_TAG=$NEW_TAG" >> tag.env
 
       # =========================================
-      # 🐳 Build, tag e push para o ECR
+      # 💾 Etapa 5: Carregar a tag gerada no ambiente
       # =========================================
-      - name: Build and push Docker image to Amazon ECR
+      - name: Carregar tag gerada
+        run: |
+          source tag.env
+          echo "📦 Usando tag: $NEW_TAG"
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+
+      # =========================================
+      # 🐳 Etapa 6: Build e Push da imagem Docker
+      # =========================================
+      - name: Build e Push da imagem Docker
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: poc-github
-          AWS_REGION: us-east-1
-          IMAGE_TAG: ${{ steps.version.outputs.tag }}
         run: |
-          echo "🏗️  Construindo imagem: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "🏗️  Construindo imagem: $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG"
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-          echo "📤 Enviando imagem para o ECR..."
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "📤 Fazendo push da imagem..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-          echo "✅ Imagem enviada: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-
-
+          echo "✅ Imagem enviada com sucesso!"
 
 
     #- name: Fill in the new image ID in the Amazon ECS task definition
