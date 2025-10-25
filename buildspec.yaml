@@ -1,0 +1,77 @@
+# ===============================================================
+# buildspec.yaml - Automação de Build e Push para Amazon ECR
+# ===============================================================
+# Esse arquivo é lido automaticamente pelo AWS CodeBuild.
+# Ele:
+#   1️⃣ Faz login no ECR
+#   2️⃣ Busca a última tag vX.Y.Z
+#   3️⃣ Incrementa a versão (ex: v0.0.1 → v0.0.2)
+#   4️⃣ Builda a imagem Docker
+#   5️⃣ Faz push com a nova tag e também com 'latest'
+# ===============================================================
+
+version: 0.2
+
+env:
+  variables:
+    REPO_NAME: "poc-github"
+    REGION: "us-east-1"
+
+phases:
+  install:
+    commands:
+      - echo "🧩 Fase de instalação inicial..."
+      - yum install -y jq
+
+  pre_build:
+    commands:
+      - echo "🔐 Fazendo login no Amazon ECR..."
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+      - ECR_URI="$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME"
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+
+      - echo "🔍 Buscando última tag válida no ECR ($REPO_NAME)..."
+      - TAGS=$(aws ecr describe-images \
+          --repository-name "$REPO_NAME" \
+          --region "$REGION" \
+          --query 'imageDetails[].imageTags' \
+          --output json | jq -r '.[]? | .[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V || true)
+
+      - |
+        if [ -z "$TAGS" ]; then
+          echo "⚠️ Nenhuma tag encontrada — iniciando em v0.0.1"
+          NEW_TAG="v0.0.1"
+        else
+          LAST_TAG=$(echo "$TAGS" | tail -n 1)
+          echo "✅ Última tag encontrada: $LAST_TAG"
+          PREFIX="v"
+          VERSION=${LAST_TAG#$PREFIX}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          PATCH=$((PATCH+1))
+          NEW_TAG="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
+        fi
+
+      - echo "🚀 Nova tag gerada: $NEW_TAG"
+      - echo "TAG_FINAL=$NEW_TAG" >> build.env
+      - echo "ECR_URI=$ECR_URI" >> build.env
+
+  build:
+    commands:
+      - source build.env
+      - echo "🏗️  Construindo imagem Docker: $ECR_URI:$TAG_FINAL"
+      - docker build -t $ECR_URI:$TAG_FINAL .
+      - docker tag $ECR_URI:$TAG_FINAL $ECR_URI:latest
+
+  post_build:
+    commands:
+      - source build.env
+      - echo "📤 Enviando imagem para o ECR..."
+      - docker push $ECR_URI:$TAG_FINAL
+      - docker push $ECR_URI:latest
+      - echo "✅ Imagem enviada com sucesso!"
+      - echo "🔖 Tag final: $TAG_FINAL"
+      - echo "IMAGE_URI=$ECR_URI:$TAG_FINAL" >> build.env
+
+artifacts:
+  files:
+    - build.env
