@@ -38,6 +38,9 @@ jobs:
       - name: Get next version tag
         id: version
         run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq        
+          
           REPO_NAME=poc-github
           REGION=us-east-1
 
