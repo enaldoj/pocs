@@ -53,7 +53,6 @@ jobs:
           REGION="us-east-1"
           echo "🔍 Buscando última tag válida no ECR ($REPO_NAME em $REGION)..."
 
-
           TAGS=$(aws ecr describe-images \
             --repository-name "$REPO_NAME" \
             --region "$REGION" \
