@@ -15,13 +15,13 @@ jobs:
 
     steps:
       # ==============================
-      # 🧩 Etapa 1: Checkout do código
+      # Etapa 1: Checkout do código
       # ==============================
       - name: Checkout código
         uses: actions/checkout@v4
 
       # =========================================
-      # 🔐 Etapa 2: Configura credenciais AWS
+      # Etapa 2: Configura credenciais AWS
       # =========================================
       - name: Configurar credenciais AWS
         uses: aws-actions/configure-aws-credentials@v4
@@ -36,14 +36,14 @@ jobs:
       #       --region us-east-1
 
       # =========================================
-      # 🔓 Etapa 3: Login no Amazon ECR
+      # Etapa 3: Login no Amazon ECR
       # =========================================
       - name: Login no Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       # =========================================
-      # 🔢 Etapa 4: Gerar automaticamente a próxima versão
+      # Etapa 4: Gerar automaticamente a próxima versão
       # =========================================
       - name: Gerar próxima tag de versão
         id: version
@@ -63,7 +63,7 @@ jobs:
             NEW_TAG="v0.0.1"
           else
             LAST_TAG=$(echo "$TAGS" | tail -n 1)
-            echo "✅ Última tag encontrada: $LAST_TAG"
+            echo "Última tag encontrada: $LAST_TAG"
             PREFIX="v"
             VERSION=${LAST_TAG#$PREFIX}
             IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
@@ -75,7 +75,7 @@ jobs:
           echo "NEW_TAG=$NEW_TAG" >> tag.env
 
       # =========================================
-      # 💾 Etapa 5: Carregar a tag gerada no ambiente
+      # Etapa 5: Carregar a tag gerada no ambiente
       # =========================================
       - name: Carregar tag gerada
         run: |
@@ -84,7 +84,7 @@ jobs:
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
       # =========================================
-      # 🐳 Etapa 6: Build e Push da imagem Docker
+      # Etapa 6: Build e Push da imagem Docker
       # =========================================
       - name: Build e Push da imagem Docker
         env:
