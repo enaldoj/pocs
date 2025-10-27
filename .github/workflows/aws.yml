@@ -29,11 +29,11 @@ jobs:
           role-to-assume: arn:aws:iam::124355661462:role/github-actions-role
           aws-region: us-east-1
 
-      - name: Executar build no CodeBuild
-        run: |
-          aws codebuild start-build \
-            --project-name poc-git-hub \
-            --region us-east-1
+      # - name: Executar build no CodeBuild
+      #   run: |
+      #     aws codebuild start-build \
+      #       --project-name poc-git-hub \
+      #       --region us-east-1
 
 
       # =========================================
@@ -92,15 +92,15 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: poc-github
         run: |
-          echo "🏗️  Construindo imagem: $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG"
+          echo "Construindo imagem: $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG"
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-          echo "📤 Fazendo push da imagem..."
+          echo "Fazendo push da imagem..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-          echo "✅ Imagem enviada com sucesso!"
+          echo "Imagem enviada com sucesso!"
 
 
     #- name: Fill in the new image ID in the Amazon ECS task definition
