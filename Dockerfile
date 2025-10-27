@@ -1,5 +1,7 @@
 # Use a base image with PHP-CLI for the built-in web server
-FROM php:8.2-cli
+#FROM php:8.2-cli
+FROM public.ecr.aws/docker/library/php:8.2-cli
+
 
 # Copy application code
 COPY src/ /var/www/html/
