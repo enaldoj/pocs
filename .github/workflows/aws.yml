@@ -35,7 +35,6 @@ jobs:
       #       --project-name poc-git-hub \
       #       --region us-east-1
 
-
       # =========================================
       # 🔓 Etapa 3: Login no Amazon ECR
       # =========================================
