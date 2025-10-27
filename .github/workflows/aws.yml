@@ -36,71 +36,71 @@ jobs:
             --region us-east-1
 
 
-      # # =========================================
-      # # 🔓 Etapa 3: Login no Amazon ECR
-      # # =========================================
-      # - name: Login no Amazon ECR
-      #   id: login-ecr
-      #   uses: aws-actions/amazon-ecr-login@v2
+      # =========================================
+      # 🔓 Etapa 3: Login no Amazon ECR
+      # =========================================
+      - name: Login no Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      # # =========================================
-      # # 🔢 Etapa 4: Gerar automaticamente a próxima versão
-      # # =========================================
-      # - name: Gerar próxima tag de versão
-      #   id: version
-      #   run: |
-      #     REPO_NAME="poc-github"
-      #     REGION="us-east-1"
-      #     echo "🔍 Buscando última tag válida no ECR ($REPO_NAME em $REGION)..."
+      # =========================================
+      # 🔢 Etapa 4: Gerar automaticamente a próxima versão
+      # =========================================
+      - name: Gerar próxima tag de versão
+        id: version
+        run: |
+          REPO_NAME="poc-github"
+          REGION="us-east-1"
+          echo "🔍 Buscando última tag válida no ECR ($REPO_NAME em $REGION)..."
 
-      #     TAGS=$(aws ecr describe-images \
-      #       --repository-name "$REPO_NAME" \
-      #       --region "$REGION" \
-      #       --query 'imageDetails[].imageTags' \
-      #       --output json | jq -r '.[]? | .[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V || true)
+          TAGS=$(aws ecr describe-images \
+            --repository-name "$REPO_NAME" \
+            --region "$REGION" \
+            --query 'imageDetails[].imageTags' \
+            --output json | jq -r '.[]? | .[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V || true)
 
-      #     if [ -z "$TAGS" ]; then
-      #       echo "⚠️ Nenhuma tag encontrada — iniciando em v0.0.1"
-      #       NEW_TAG="v0.0.1"
-      #     else
-      #       LAST_TAG=$(echo "$TAGS" | tail -n 1)
-      #       echo "✅ Última tag encontrada: $LAST_TAG"
-      #       PREFIX="v"
-      #       VERSION=${LAST_TAG#$PREFIX}
-      #       IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-      #       PATCH=$((PATCH+1))
-      #       NEW_TAG="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
-      #     fi
+          if [ -z "$TAGS" ]; then
+            echo "⚠️ Nenhuma tag encontrada — iniciando em v0.0.1"
+            NEW_TAG="v0.0.1"
+          else
+            LAST_TAG=$(echo "$TAGS" | tail -n 1)
+            echo "✅ Última tag encontrada: $LAST_TAG"
+            PREFIX="v"
+            VERSION=${LAST_TAG#$PREFIX}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+            PATCH=$((PATCH+1))
+            NEW_TAG="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
+          fi
 
-      #     echo "🚀 Nova tag gerada: $NEW_TAG"
-      #     echo "NEW_TAG=$NEW_TAG" >> tag.env
+          echo "🚀 Nova tag gerada: $NEW_TAG"
+          echo "NEW_TAG=$NEW_TAG" >> tag.env
 
-      # # =========================================
-      # # 💾 Etapa 5: Carregar a tag gerada no ambiente
-      # # =========================================
-      # - name: Carregar tag gerada
-      #   run: |
-      #     source tag.env
-      #     echo "📦 Usando tag: $NEW_TAG"
-      #     echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+      # =========================================
+      # 💾 Etapa 5: Carregar a tag gerada no ambiente
+      # =========================================
+      - name: Carregar tag gerada
+        run: |
+          source tag.env
+          echo "📦 Usando tag: $NEW_TAG"
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
-      # # =========================================
-      # # 🐳 Etapa 6: Build e Push da imagem Docker
-      # # =========================================
-      # - name: Build e Push da imagem Docker
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #     ECR_REPOSITORY: poc-github
-      #   run: |
-      #     echo "🏗️  Construindo imagem: $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG"
-      #     docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG .
-      #     docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+      # =========================================
+      # 🐳 Etapa 6: Build e Push da imagem Docker
+      # =========================================
+      - name: Build e Push da imagem Docker
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: poc-github
+        run: |
+          echo "🏗️  Construindo imagem: $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG"
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      #     echo "📤 Fazendo push da imagem..."
-      #     docker push $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG
-      #     docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "📤 Fazendo push da imagem..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      #     echo "✅ Imagem enviada com sucesso!"
+          echo "✅ Imagem enviada com sucesso!"
 
 
     #- name: Fill in the new image ID in the Amazon ECS task definition
@@ -110,6 +110,7 @@ jobs:
     #    task-definition: ${{ env.ECS_TASK_DEFINITION }}
     #    container-name: ${{ env.CONTAINER_NAME }}
     #    image: ${{ steps.build-image.outputs.image }}
+    
 
     #- name: Deploy Amazon ECS task definition
     #  uses: aws-actions/amazon-ecs-deploy-task-definition@v1
