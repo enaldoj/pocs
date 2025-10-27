@@ -26,7 +26,7 @@ jobs:
       - name: Configurar credenciais AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::124355661462:role/github-actions-role
+          role-to-assume: arn:aws:iam::899360400100:role/github-actions-role
           aws-region: us-east-1
 
       # - name: Executar build no CodeBuild
@@ -49,7 +49,7 @@ jobs:
       - name: Gerar próxima tag de versão
         id: version
         run: |
-          REPO_NAME="poc-github"
+          REPO_NAME="gitub-poc"
           REGION="us-east-1"
           echo "🔍 Buscando última tag válida no ECR ($REPO_NAME em $REGION)..."
 
@@ -60,7 +60,7 @@ jobs:
             --output json | jq -r '.[]? | .[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V || true)
 
           if [ -z "$TAGS" ]; then
-            echo "⚠️ Nenhuma tag encontrada — iniciando em v0.0.1"
+            echo "Nenhuma tag encontrada — iniciando em v0.0.1"
             NEW_TAG="v0.0.1"
           else
             LAST_TAG=$(echo "$TAGS" | tail -n 1)
@@ -72,7 +72,7 @@ jobs:
             NEW_TAG="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
           fi
 
-          echo "🚀 Nova tag gerada: $NEW_TAG"
+          echo "Nova tag gerada: $NEW_TAG"
           echo "NEW_TAG=$NEW_TAG" >> tag.env
 
       # =========================================
@@ -81,7 +81,7 @@ jobs:
       - name: Carregar tag gerada
         run: |
           source tag.env
-          echo "📦 Usando tag: $NEW_TAG"
+          echo "Usando tag: $NEW_TAG"
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
       # =========================================
@@ -90,7 +90,7 @@ jobs:
       - name: Build e Push da imagem Docker
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: poc-github
+          ECR_REPOSITORY: gitub-poc
         run: |
           echo "Construindo imagem: $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG"
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG .
